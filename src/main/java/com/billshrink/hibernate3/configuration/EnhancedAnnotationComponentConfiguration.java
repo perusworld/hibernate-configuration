@@ -53,6 +53,28 @@ import org.hibernate.util.ReflectHelper;
 import org.jboss.util.file.ArchiveBrowser;
 
 /**
+ * 
+ * Added a new filter <b>class-filter</b> which filters matching classes from
+ * being picked up for schema manipulation. For example when working on certain
+ * projects you may not want certain entities to be created in the database. For
+ * such cases you can use the above filter and add the required regex to exclude
+ * those classes
+ * 
+ * In order to use this, in the hibernate3-maven-plugin configuration use
+ * enhancedannotationconfiguration as the implementation and include this as the
+ * dependency
+ * 
+ * <pre>
+ * 	&lt;dependency&gt;
+ * 		&lt;groupId&gt;com.billshrink.hibernate3&lt;/groupId&gt;
+ * 		&lt;artifactId&gt;hibernate-configuration&lt;/artifactId&gt;
+ * 		&lt;version&gt;1.0&lt;/version&gt;
+ * 	&lt;/dependency&gt;
+ * </pre>
+ * 
+ * Copied the source of AnnotationComponentConfiguration from
+ * maven-hibernate3-jdk15
+ * 
  * @author Saravana P Shanmugam
  * 
  */
