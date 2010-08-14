@@ -1,0 +1,9 @@
+<component-set>
+	<components>
+		<component>
+			<role>org.codehaus.mojo.hibernate3.configuration.ComponentConfiguration</role>
+			<role-hint>enhancedannotationconfiguration</role-hint>
+			<implementation>com.billshrink.hibernate3.configuration.EnhancedAnnotationComponentConfiguration</implementation>
+		</component>
+	</components>
+</component-set>
