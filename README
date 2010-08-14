@@ -1,0 +1,54 @@
+Added a new filter <b>class-filter</b> which filters matching classes from
+being picked up for schema manipulation. For example when working on certain
+projects you may not want certain entities to be created in the database. For
+such cases you can use the above filter and add the required regex to exclude
+those classes
+
+In order to use this, in the hibernate3-maven-plugin configuration use
+enhancedannotationconfiguration as the implementation and include this as the
+dependency
+
+<dependency>
+	<groupId>com.billshrink.hibernate3</groupId>
+	<artifactId>hibernate-configuration</artifactId>
+	<version>1.0</version>
+</dependency>
+
+
+example configuration
+<plugin>
+	<groupId>org.codehaus.mojo</groupId>
+	<artifactId>hibernate3-maven-plugin</artifactId>
+	<version>2.2</version>
+	<executions>
+		<execution>
+			<goals>
+				<goal>hbm2ddl</goal>
+			</goals>
+		</execution>
+	</executions>
+	<configuration>
+		<componentProperties>
+			<implementation>enhancedannotationconfiguration</implementation>
+			<scan-classes>true</scan-classes>
+			<class-filter>com.foo.(blah|hello).*</class-filter>
+			<outputfilename>schema.sql</outputfilename>
+			<drop>true</drop>
+			<delimiter>;</delimiter>
+			<create>true</create>
+			<export>false</export>
+			<update>true</update>
+			<format>true</format>
+			<jdk5>true</jdk5>
+			<propertyfile>hibernate.properties</propertyfile>
+			<namingstrategy>org.hibernate.cfg.ImprovedNamingStrategy</namingstrategy>
+		</componentProperties>
+	</configuration>
+	<dependencies>
+		<dependency>
+			<groupId>com.billshrink.hibernate3</groupId>
+			<artifactId>hibernate-configuration</artifactId>
+			<version>1.0</version>
+		</dependency>
+	</dependencies>
+</plugin>
