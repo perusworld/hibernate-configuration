@@ -54,11 +54,11 @@ import org.jboss.util.file.ArchiveBrowser;
 
 /**
  * 
- * Added a new filter <b>class-filter</b> which filters matching classes from
- * being picked up for schema manipulation. For example when working on certain
- * projects you may not want certain entities to be created in the database. For
- * such cases you can use the above filter and add the required regex to exclude
- * those classes
+ * Added new filters <b>class-filter-exclude</b> and <b>class-filter-include</b>
+ * which filters matching classes from being picked up or not for schema
+ * manipulation. For example when working on certain projects you may not want
+ * certain entities to be created in the database. For such cases you can use
+ * the above filter and add the required regex to exclude those classes
  * 
  * In order to use this, in the hibernate3-maven-plugin configuration use
  * enhancedannotationconfiguration as the implementation and include this as the
@@ -152,10 +152,26 @@ public class EnhancedAnnotationComponentConfiguration extends
 	private void scanForClasses(File directory, List<String> entities)
 			throws MalformedURLException {
 		if (directory.list() != null) {
-			String classFilter = getExporterMojo().getComponentProperty(
-					"class-filter", null);
-			Pattern classFilterPattern = null == classFilter ? null : Pattern
-					.compile(classFilter, Pattern.CASE_INSENSITIVE);
+			String classFilterExclude = getExporterMojo().getComponentProperty(
+					"class-filter-exclude", null);
+			Pattern classFilterExcludePattern = null == classFilterExclude
+					|| 0 == classFilterExclude.trim().length()
+					|| "empty".equals(classFilterExclude) ? null : Pattern
+					.compile(classFilterExclude, Pattern.CASE_INSENSITIVE);
+			String classFilterInclude = getExporterMojo().getComponentProperty(
+					"class-filter-include", null);
+			Pattern classFilterIncludePattern = null == classFilterInclude
+					|| 0 == classFilterInclude.trim().length()
+					|| "empty".equals(classFilterInclude) ? null : Pattern
+					.compile(classFilterInclude, Pattern.CASE_INSENSITIVE);
+			if (null != classFilterExclude) {
+				getExporterMojo().getLog().debug(
+						"using classFilterExclude " + classFilterExclude);
+			}
+			if (null != classFilterInclude) {
+				getExporterMojo().getLog().debug(
+						"using classFilterInclude " + classFilterInclude);
+			}
 			getExporterMojo().getLog().debug("[scanForClasses] " + directory);
 			URL jar = directory.toURI().toURL();
 			Iterator<?> it;
@@ -192,11 +208,18 @@ public class EnhancedAnnotationComponentConfiguration extends
 				AnnotationsAttribute visible = (AnnotationsAttribute) cf
 						.getAttribute(AnnotationsAttribute.visibleTag);
 				if (visible != null) {
-					if (null != classFilterPattern
-							&& classFilterPattern.matcher(cf.getName())
+					if (null != classFilterExcludePattern
+							&& classFilterExcludePattern.matcher(cf.getName())
 									.matches()) {
 						getExporterMojo().getLog().info(
-								"Ignoring " + cf.getName());
+								"Ignoring (by excludes) " + cf.getName());
+						continue;
+					}
+					if (null != classFilterIncludePattern
+							&& !classFilterIncludePattern.matcher(cf.getName())
+									.matches()) {
+						getExporterMojo().getLog().info(
+								"Ignoring (by includes) " + cf.getName());
 						continue;
 					}
 					boolean isEntity = visible.getAnnotation(Entity.class

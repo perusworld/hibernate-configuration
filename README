@@ -1,8 +1,8 @@
-Added a new filter <b>class-filter</b> which filters matching classes from
-being picked up for schema manipulation. For example when working on certain
-projects you may not want certain entities to be created in the database. For
-such cases you can use the above filter and add the required regex to exclude
-those classes
+Added new filters class-filter-exclude and class-filter-include
+which filters matching classes from being picked up or not for schema
+manipulation. For example when working on certain projects you may not want
+certain entities to be created in the database. For such cases you can use
+the above filter and add the required regex to exclude those classes
 
 In order to use this, in the hibernate3-maven-plugin configuration use
 enhancedannotationconfiguration as the implementation and include this as the
@@ -31,7 +31,8 @@ example configuration
 		<componentProperties>
 			<implementation>enhancedannotationconfiguration</implementation>
 			<scan-classes>true</scan-classes>
-			<class-filter>com.foo.(blah|hello).*</class-filter>
+			<class-filter-include>com.foo.(blah|hello).*</class-filter-include>
+			<class-filter-exclude>empty</class-filter-exclude>
 			<outputfilename>schema.sql</outputfilename>
 			<drop>true</drop>
 			<delimiter>;</delimiter>
