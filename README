@@ -17,6 +17,13 @@ dependency
 	<version>1.0</version>
 </dependency>
 
+you would also need to add this repository configuration as well
+
+<repository>
+	<id>perusworld</id>
+	<url>http://github.com/perusworld/maven-repo/raw/master/</url>
+</repository>
+
 
 example configuration
 <plugin>
