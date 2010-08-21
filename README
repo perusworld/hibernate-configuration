@@ -21,7 +21,7 @@ you would also need to add this repository configuration as well
 
 <repository>
 	<id>perusworld</id>
-	<url>http://github.com/perusworld/maven-repo/raw/master/</url>
+	<url>http://github.com/perusworld/maven-repo/raw/master/&lt;/url>
 </repository>
 
 
