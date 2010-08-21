@@ -52,7 +52,7 @@ example configuration
 		<dependency>
 			<groupId>com.billshrink.hibernate3</groupId>
 			<artifactId>hibernate-configuration</artifactId>
-			<version>1.0</version>
+			<version>1.1</version>
 		</dependency>
 	</dependencies>
 </plugin>
