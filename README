@@ -7,6 +7,8 @@ I saw a caching issue in maven where in the filters defined in one profile
 was being used in the other if they were not explicitly overridden. to fix it i added a constant empty
 when defined for a filter will be treated as null 
 
+Also added support for adding package configurations (package-info.java) using add-packages
+
 In order to use this, in the hibernate3-maven-plugin configuration use
 enhancedannotationconfiguration as the implementation and include this as the
 dependency
@@ -42,6 +44,7 @@ example configuration
 			<scan-classes>true</scan-classes>
 			<class-filter-include>com.foo.(blah|hello).*</class-filter-include>
 			<class-filter-exclude>empty</class-filter-exclude>
+			<add-packages>com.foo.blah</add-packages>
 			<outputfilename>schema.sql</outputfilename>
 			<drop>true</drop>
 			<delimiter>;</delimiter>

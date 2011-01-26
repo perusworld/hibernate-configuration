@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -68,7 +69,7 @@ import org.jboss.util.file.ArchiveBrowser;
  * 	&lt;dependency&gt;
  * 		&lt;groupId&gt;com.billshrink.hibernate3&lt;/groupId&gt;
  * 		&lt;artifactId&gt;hibernate-configuration&lt;/artifactId&gt;
- * 		&lt;version&gt;1.0&lt;/version&gt;
+ * 		&lt;version&gt;1.1&lt;/version&gt;
  * 	&lt;/dependency&gt;
  * </pre>
  * 
@@ -78,215 +79,183 @@ import org.jboss.util.file.ArchiveBrowser;
  * @author Saravana P Shanmugam
  * 
  */
-public class EnhancedAnnotationComponentConfiguration extends
-		AnnotationComponentConfiguration {
+public class EnhancedAnnotationComponentConfiguration extends AnnotationComponentConfiguration {
 
-	/**
+    /**
      * 
      */
-	public EnhancedAnnotationComponentConfiguration() {
-	}
+    public EnhancedAnnotationComponentConfiguration() {
+    }
 
-	/*
-	 * (non-Jsdoc)
-	 * 
-	 * @see
-	 * org.codehaus.mojo.hibernate3.configuration.AnnotationComponentConfiguration
-	 * #createConfiguration()
-	 */
-	@Override
-	protected Configuration createConfiguration() {
-		// retrievethe Build object
-		Build build = getExporterMojo().getProject().getBuild();
+    /*
+     * (non-Jsdoc)
+     * 
+     * @see
+     * org.codehaus.mojo.hibernate3.configuration.AnnotationComponentConfiguration
+     * #createConfiguration()
+     */
+    @Override
+    protected Configuration createConfiguration() {
+        // retrievethe Build object
+        Build build = getExporterMojo().getProject().getBuild();
 
-		// now create an empty arraylist that is going to hold our entities
-		List<String> entities = new ArrayList<String>();
+        // now create an empty arraylist that is going to hold our entities
+        List<String> entities = new ArrayList<String>();
 
-		try {
-			if (getExporterMojo().getComponentProperty("scan-classes", false)) {
-				scanForClasses(new File(build.getOutputDirectory()), entities);
-				scanForClasses(new File(build.getTestOutputDirectory()),
-						entities);
-			}
+        try {
+            if (getExporterMojo().getComponentProperty("scan-classes", false)) {
+                scanForClasses(new File(build.getOutputDirectory()), entities);
+                scanForClasses(new File(build.getTestOutputDirectory()), entities);
+            }
 
-			if (getExporterMojo().getComponentProperty("scan-jars", false)) {
-				@SuppressWarnings("unchecked")
-				List<Artifact> runtimeArtifacts = getExporterMojo()
-						.getProject().getRuntimeArtifacts();
-				for (Artifact a : runtimeArtifacts) {
-					File artifactFile = a.getFile();
-					if (!artifactFile.isDirectory()) {
-						getExporterMojo().getLog().debug(
-								"[URL] "
-										+ artifactFile.toURI().toURL()
-												.toString());
-						scanForClasses(artifactFile, entities);
-					}
-				}
+            if (getExporterMojo().getComponentProperty("scan-jars", false)) {
+                @SuppressWarnings("unchecked")
+                List<Artifact> runtimeArtifacts = getExporterMojo().getProject().getRuntimeArtifacts();
+                for (Artifact a : runtimeArtifacts) {
+                    File artifactFile = a.getFile();
+                    if (!artifactFile.isDirectory()) {
+                        getExporterMojo().getLog().debug("[URL] " + artifactFile.toURI().toURL().toString());
+                        scanForClasses(artifactFile, entities);
+                    }
+                }
 
-				@SuppressWarnings("unchecked")
-				List<Artifact> testArtifacts = getExporterMojo().getProject()
-						.getTestArtifacts();
-				for (Artifact a : testArtifacts) {
-					File artifactFile = a.getFile();
-					if (!artifactFile.isDirectory()) {
-						getExporterMojo().getLog().debug(
-								"[URL] "
-										+ artifactFile.toURI().toURL()
-												.toString());
-						scanForClasses(artifactFile, entities);
-					}
-				}
-			}
-		} catch (MalformedURLException e) {
-			getExporterMojo().getLog().error(e.getMessage(), e);
-			return null;
-		}
+                @SuppressWarnings("unchecked")
+                List<Artifact> testArtifacts = getExporterMojo().getProject().getTestArtifacts();
+                for (Artifact a : testArtifacts) {
+                    File artifactFile = a.getFile();
+                    if (!artifactFile.isDirectory()) {
+                        getExporterMojo().getLog().debug("[URL] " + artifactFile.toURI().toURL().toString());
+                        scanForClasses(artifactFile, entities);
+                    }
+                }
+            }
+            String packages = getExporterMojo().getComponentProperty("add-packages", "");
+            if (!"".equals(packages)) {
+                entities.addAll(Arrays.asList(packages.split(",")));
+            }
+        } catch (MalformedURLException e) {
+            getExporterMojo().getLog().error(e.getMessage(), e);
+            return null;
+        }
 
-		// now create the configuration object
-		AnnotationConfiguration configuration = new AnnotationConfiguration();
-		addNamedAnnotatedClasses(configuration, entities);
-		return configuration;
-	}
+        // now create the configuration object
+        AnnotationConfiguration configuration = new AnnotationConfiguration();
+        addNamedAnnotatedClasses(configuration, entities);
+        return configuration;
+    }
 
-	private void scanForClasses(File directory, List<String> entities)
-			throws MalformedURLException {
-		if (directory.list() != null) {
-			String classFilterExclude = getExporterMojo().getComponentProperty(
-					"class-filter-exclude", null);
-			Pattern classFilterExcludePattern = null == classFilterExclude
-					|| 0 == classFilterExclude.trim().length()
-					|| "empty".equals(classFilterExclude) ? null : Pattern
-					.compile(classFilterExclude, Pattern.CASE_INSENSITIVE);
-			String classFilterInclude = getExporterMojo().getComponentProperty(
-					"class-filter-include", null);
-			Pattern classFilterIncludePattern = null == classFilterInclude
-					|| 0 == classFilterInclude.trim().length()
-					|| "empty".equals(classFilterInclude) ? null : Pattern
-					.compile(classFilterInclude, Pattern.CASE_INSENSITIVE);
-			if (null != classFilterExclude) {
-				getExporterMojo().getLog().debug(
-						"using classFilterExclude " + classFilterExclude);
-			}
-			if (null != classFilterInclude) {
-				getExporterMojo().getLog().debug(
-						"using classFilterInclude " + classFilterInclude);
-			}
-			getExporterMojo().getLog().debug("[scanForClasses] " + directory);
-			URL jar = directory.toURI().toURL();
-			Iterator<?> it;
-			try {
-				it = ArchiveBrowser.getBrowser(jar,
-						new ArchiveBrowser.Filter() {
-							public boolean accept(String filename) {
-								return filename.endsWith(".class");
-							}
-						});
-			} catch (RuntimeException e) {
-				throw new RuntimeException("error trying to scan <jar-file>: "
-						+ jar.toString(), e);
-			}
+    private void scanForClasses(File directory, List<String> entities) throws MalformedURLException {
+        if (directory.list() != null) {
+            String classFilterExclude = getExporterMojo().getComponentProperty("class-filter-exclude", null);
+            Pattern classFilterExcludePattern = null == classFilterExclude || 0 == classFilterExclude.trim().length()
+                    || "empty".equals(classFilterExclude) ? null : Pattern.compile(classFilterExclude,
+                    Pattern.CASE_INSENSITIVE);
+            String classFilterInclude = getExporterMojo().getComponentProperty("class-filter-include", null);
+            Pattern classFilterIncludePattern = null == classFilterInclude || 0 == classFilterInclude.trim().length()
+                    || "empty".equals(classFilterInclude) ? null : Pattern.compile(classFilterInclude,
+                    Pattern.CASE_INSENSITIVE);
+            if (null != classFilterExclude) {
+                getExporterMojo().getLog().debug("using classFilterExclude " + classFilterExclude);
+            }
+            if (null != classFilterInclude) {
+                getExporterMojo().getLog().debug("using classFilterInclude " + classFilterInclude);
+            }
+            getExporterMojo().getLog().debug("[scanForClasses] " + directory);
+            URL jar = directory.toURI().toURL();
+            Iterator<?> it;
+            try {
+                it = ArchiveBrowser.getBrowser(jar, new ArchiveBrowser.Filter() {
+                    public boolean accept(String filename) {
+                        return filename.endsWith(".class");
+                    }
+                });
+            } catch (RuntimeException e) {
+                throw new RuntimeException("error trying to scan <jar-file>: " + jar.toString(), e);
+            }
 
-			// need to look into every entry in the archive to see if anybody
-			// has tags
-			// defined.
-			while (it.hasNext()) {
-				InputStream stream = (InputStream) it.next();
-				DataInputStream dstream = new DataInputStream(stream);
-				ClassFile cf = null;
-				try {
-					try {
-						cf = new ClassFile(dstream);
-					} finally {
-						dstream.close();
-						stream.close();
-					}
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
+            // need to look into every entry in the archive to see if anybody
+            // has tags
+            // defined.
+            while (it.hasNext()) {
+                InputStream stream = (InputStream) it.next();
+                DataInputStream dstream = new DataInputStream(stream);
+                ClassFile cf = null;
+                try {
+                    try {
+                        cf = new ClassFile(dstream);
+                    } finally {
+                        dstream.close();
+                        stream.close();
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
 
-				AnnotationsAttribute visible = (AnnotationsAttribute) cf
-						.getAttribute(AnnotationsAttribute.visibleTag);
-				if (visible != null) {
-					if (null != classFilterExcludePattern
-							&& classFilterExcludePattern.matcher(cf.getName())
-									.matches()) {
-						getExporterMojo().getLog().info(
-								"Ignoring (by excludes) " + cf.getName());
-						continue;
-					}
-					if (null != classFilterIncludePattern
-							&& !classFilterIncludePattern.matcher(cf.getName())
-									.matches()) {
-						getExporterMojo().getLog().info(
-								"Ignoring (by includes) " + cf.getName());
-						continue;
-					}
-					boolean isEntity = visible.getAnnotation(Entity.class
-							.getName()) != null;
-					if (isEntity) {
-						getExporterMojo().getLog().info(
-								"found EJB3 Entity bean: " + cf.getName());
-						entities.add(cf.getName());
-					}
-					boolean isEmbeddable = visible
-							.getAnnotation(Embeddable.class.getName()) != null;
-					if (isEmbeddable) {
-						getExporterMojo().getLog().info(
-								"found EJB3 @Embeddable: " + cf.getName());
-						entities.add(cf.getName());
-					}
-					boolean isEmbeddableSuperclass = visible
-							.getAnnotation(MappedSuperclass.class.getName()) != null;
-					if (isEmbeddableSuperclass) {
-						getExporterMojo().getLog()
-								.info("found EJB3 @MappedSuperclass: "
-										+ cf.getName());
-						entities.add(cf.getName());
-					}
-				}
-			}
-		}
-	}
+                AnnotationsAttribute visible = (AnnotationsAttribute) cf.getAttribute(AnnotationsAttribute.visibleTag);
+                if (visible != null) {
+                    if (null != classFilterExcludePattern && classFilterExcludePattern.matcher(cf.getName()).matches()) {
+                        getExporterMojo().getLog().info("Ignoring (by excludes) " + cf.getName());
+                        continue;
+                    }
+                    if (null != classFilterIncludePattern && !classFilterIncludePattern.matcher(cf.getName()).matches()) {
+                        getExporterMojo().getLog().info("Ignoring (by includes) " + cf.getName());
+                        continue;
+                    }
+                    boolean isEntity = visible.getAnnotation(Entity.class.getName()) != null;
+                    if (isEntity) {
+                        getExporterMojo().getLog().info("found EJB3 Entity bean: " + cf.getName());
+                        entities.add(cf.getName());
+                    }
+                    boolean isEmbeddable = visible.getAnnotation(Embeddable.class.getName()) != null;
+                    if (isEmbeddable) {
+                        getExporterMojo().getLog().info("found EJB3 @Embeddable: " + cf.getName());
+                        entities.add(cf.getName());
+                    }
+                    boolean isEmbeddableSuperclass = visible.getAnnotation(MappedSuperclass.class.getName()) != null;
+                    if (isEmbeddableSuperclass) {
+                        getExporterMojo().getLog().info("found EJB3 @MappedSuperclass: " + cf.getName());
+                        entities.add(cf.getName());
+                    }
+                }
+            }
+        }
+    }
 
-	private void addNamedAnnotatedClasses(AnnotationConfiguration cfg,
-			Collection<String> classNames) {
-		for (String name : classNames) {
-			try {
-				Class<?> clazz = classForName(name);
-				cfg.addAnnotatedClass(clazz);
-			} catch (ClassNotFoundException cnfe) {
-				Package pkg;
-				try {
-					pkg = classForName(name + ".package-info").getPackage();
-				} catch (ClassNotFoundException e) {
-					pkg = null;
-				}
-				if (pkg == null) {
-					throw new PersistenceException(name
-							+ " class or package not found", cnfe);
-				} else {
-					cfg.addPackage(name);
-				}
-			}
-		}
-	}
+    private void addNamedAnnotatedClasses(AnnotationConfiguration cfg, Collection<String> classNames) {
+        for (String name : classNames) {
+            try {
+                Class<?> clazz = classForName(name);
+                cfg.addAnnotatedClass(clazz);
+            } catch (ClassNotFoundException cnfe) {
+                Package pkg;
+                try {
+                    pkg = classForName(name + ".package-info").getPackage();
+                } catch (ClassNotFoundException e) {
+                    pkg = null;
+                }
+                if (pkg == null) {
+                    throw new PersistenceException(name + " class or package not found", cnfe);
+                } else {
+                    cfg.addPackage(name);
+                }
+            }
+        }
+    }
 
-	private Class<?> classForName(String className)
-			throws ClassNotFoundException {
-		return ReflectHelper.classForName(className, this.getClass());
-	}
+    private Class<?> classForName(String className) throws ClassNotFoundException {
+        return ReflectHelper.classForName(className, this.getClass());
+    }
 
-	/*
-	 * (non-Jsdoc)
-	 * 
-	 * @see
-	 * org.codehaus.mojo.hibernate3.configuration.AnnotationComponentConfiguration
-	 * #getName()
-	 */
-	@Override
-	public String getName() {
-		return "enhancedannotationconfiguration";
-	}
+    /*
+     * (non-Jsdoc)
+     * 
+     * @see
+     * org.codehaus.mojo.hibernate3.configuration.AnnotationComponentConfiguration
+     * #getName()
+     */
+    @Override
+    public String getName() {
+        return "enhancedannotationconfiguration";
+    }
 
 }
